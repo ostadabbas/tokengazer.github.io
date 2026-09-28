@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TokenGazer</title>
+<meta name="description" content="TokenGazer: Learning Where to Look in Token Space for Visuomotor Control.">
+<meta property="og:title" content="TokenGazer: Learning Where to Look in Token Space for Visuomotor Control">
+<meta property="og:description" content="A policy that selects a small subset of task-relevant tokens from a frozen vision transformer for robot control.">
+<meta property="og:image" content="https://ostadabbas.github.io/tokengazer.github.io/assets/fig_teaser.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👁️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+  :root {
+    --text: #1f2328;
+    --muted: #57606a;
+    --faint: #8c959f;
+    --border: #e1e4e8;
+    --bg: #ffffff;
+    --band: #f6f8fa;
+    --accent: #6a3fb5;
+    --btn: #24292f;
+    --btn-hover: #444c56;
+    --best: #f1ebfb;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Noto Sans", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+  .container.wide { max-width: 1100px; }
+
+  /* Hero */
+  .hero { padding: 72px 0 36px; text-align: center; }
+  .venue {
+    display: inline-block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--best);
+    border-radius: 999px;
+    padding: 4px 14px;
+    margin-bottom: 22px;
+  }
+  h1.title {
+    font-size: clamp(1.9rem, 4.2vw, 2.9rem);
+    line-height: 1.2;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    margin: 0 auto 26px;
+    max-width: 900px;
+  }
+  h1.title .name { color: var(--accent); }
+  .authors {
+    font-size: 1.12rem;
+    margin: 0 auto 8px;
+    max-width: 1000px;
+    line-height: 1.9;
+  }
+  .authors .author { white-space: nowrap; margin: 0 9px; }
+  .authors a { color: var(--text); border-bottom: 1px solid transparent; }
+  .authors a:hover { text-decoration: none; border-bottom-color: var(--accent); color: var(--accent); }
+  .authors sup { color: var(--muted); font-size: 0.7em; margin-left: 1px; }
+  .affiliations { color: var(--muted); font-size: 1rem; margin: 0 0 28px; }
+  .affiliations span { margin: 0 12px; white-space: nowrap; }
+  .links { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 22px;
+    border-radius: 999px;
+    background: var(--btn);
+    color: #fff;
+    font-size: 0.98rem;
+    font-weight: 500;
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  .btn:hover { background: var(--btn-hover); text-decoration: none; transform: translateY(-1px); }
+  .btn .hf { font-size: 1.1rem; line-height: 1; }
+
+  /* Sections */
+  section { padding: 44px 0; }
+  section.band { background: var(--band); }
+  h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-align: center;
+    margin: 0 0 26px;
+  }
+  p { margin: 0 0 16px; }
+  .abstract p {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 1.12rem;
+    line-height: 1.75;
+    text-align: justify;
+    hyphens: auto;
+  }
+
+  figure { margin: 30px 0; }
+  figure img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 10px;
+  }
+  figure.framed img { border: 1px solid var(--border); background: #fff; }
+  figure.narrow { max-width: 760px; margin-left: auto; margin-right: auto; }
+  figcaption {
+    margin: 14px auto 0;
+    font-size: 0.93rem;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 900px;
+  }
+
+  /* Videos */
+  .video-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 26px;
+    margin: 30px 0 0;
+  }
+  .video-cell {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(31, 35, 40, 0.06);
+  }
+  .video-cell video { width: 100%; height: auto; display: block; background: #000; }
+  .video-cell p {
+    margin: 0;
+    padding: 11px 14px 13px;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  /* Tables, booktabs style */
+  .table-wrap { overflow-x: auto; margin: 30px 0 10px; -webkit-overflow-scrolling: touch; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.95rem;
+    font-variant-numeric: tabular-nums;
+    border-top: 2px solid var(--text);
+    border-bottom: 2px solid var(--text);
+  }
+  caption {
+    caption-side: top;
+    text-align: left;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    padding-bottom: 10px;
+  }
+  th, td { padding: 9px 14px; text-align: center; white-space: nowrap; }
+  thead th { font-weight: 600; border-bottom: 1px solid var(--text); }
+  tbody tr + tr td { border-top: 1px solid var(--border); }
+  tbody tr.group td { border-top: 1px solid #c9ced4; }
+  td:first-child, th:first-child { text-align: left; }
+  .best { font-weight: 700; background: var(--best); }
+  tr.ours td:first-child { font-weight: 600; color: var(--accent); }
+  .note { font-size: 0.88rem; color: var(--muted); margin-top: 10px; line-height: 1.6; }
+  sub { font-size: 0.72em; }
+
+  /* Code */
+  .code-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+  .code-card {
+    display: flex; align-items: center; gap: 16px;
+    padding: 18px 20px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--text);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .code-card:hover { text-decoration: none; border-color: var(--accent); box-shadow: 0 2px 10px rgba(106, 63, 181, 0.12); }
+  .code-card .icon { font-size: 1.9rem; width: 36px; text-align: center; }
+  .code-card strong { display: block; font-size: 1.02rem; }
+  .code-card span { font-size: 0.88rem; color: var(--muted); }
+
+  footer {
+    padding: 34px 0 48px;
+    text-align: center;
+    color: var(--faint);
+    font-size: 0.88rem;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 720px) {
+    body { font-size: 16px; }
+    .hero { padding: 48px 0 24px; }
+    .container { padding: 0 16px; }
+    section { padding: 34px 0; }
+    .video-grid, .code-links { grid-template-columns: 1fr; }
+    .abstract p { text-align: left; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="container wide">
+    <div class="venue">Under review at ICLR 2027</div>
+    <h1 class="title"><span class="name">TokenGazer</span>: Learning Where to Look in Token Space for Visuomotor Control</h1>
+    <p class="authors">
+      <span class="author"><a href="https://bishoymoussa.github.io/">Bishoy Galoaa</a><sup>1</sup></span>
+      <span class="author">Ahmed Agha<sup>1</sup></span>
+      <span class="author"><a href="https://eliealjalbout.github.io/">Elie Aljalbout</a><sup>2</sup></span>
+      <span class="author"><a href="https://www.khoury.northeastern.edu/home/camato/">Christopher Amato</a><sup>1</sup></span>
+      <span class="author"><a href="https://www.khoury.northeastern.edu/people/robert-platt/">Robert Platt</a><sup>1</sup></span>
+      <span class="author"><a href="https://web.northeastern.edu/ostadabbas/">Sarah Ostadabbas</a><sup>1</sup></span>
+    </p>
+    <p class="affiliations">
+      <span><sup>1</sup>Northeastern University</span>
+      <span><sup>2</sup>NVIDIA</span>
+    </p>
+    <div class="links">
+      <a class="btn" href="https://github.com/ostadabbas/TokenGazer"><i class="fa-brands fa-github"></i> Code</a>
+      <a class="btn" href="https://huggingface.co/bishoygaloaa/tokengazer"><span class="hf">🤗</span> Models</a>
+      <a class="btn" href="#rollouts"><i class="fa-solid fa-film"></i> Rollouts</a>
+    </div>
+  </div>
+</header>
+
+<section class="band abstract">
+  <div class="container">
+    <h2>Abstract</h2>
+    <p>
+      In robot policies, using dense tokens from pretrained vision transformers, rather than a
+      compressed global representation, preserves rich spatial structure and enables spatial
+      reasoning and strong performance. However, dense representations come with two problems.
+      First, policies that consume all tokens can be computationally expensive to train and can
+      be slow at inference time. Second, dense token sets typically carry task-irrelevant
+      information, such as background details, noise, clutter, and distractors. Conditioning on
+      such redundant token sets can hurt policy generalization. In this work, we introduce
+      TokenGazer, a policy that selects a small subset of tokens carrying task-relevant
+      information, minimizing redundant information passed downstream while preserving the
+      benefits of pretrained dense features and avoiding the need to fine-tune large model
+      encoders. A key challenge is choosing the right training signal for this selection: a
+      reconstruction objective rewards tokens that preserve visual fidelity rather than ones
+      useful for control. Instead, we reward our token selection policy with a behavior cloning
+      objective on a downstream action head conditioned on the selected tokens. We train the
+      token policy and the action head alternately. Our policies conditioned on this sparse token
+      subset outperform or at least match full-token-conditioned policy performance while
+      processing far fewer tokens per step. This trend is more evident when the robot encounters
+      out-of-distribution scenes.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="container wide">
+    <figure>
+      <img src="assets/fig_teaser.png" alt="Teaser figure: success versus token budget on PushT, dense-vs-TokenGazer bars across benchmarks, and stacked Stage 1 plus Stage 2 training time versus token count.">
+      <figcaption>
+        (a) Clean PushT success vs. token budget K; thumbnails show the selected patches. (b)
+        Success of dense and TokenGazer on the same four configurations as (c), with 95%
+        confidence intervals (single-seed cells marked; Cube shown as the fraction of cubes
+        placed). (c) Training time: one-time Stage 1 (hatched) plus Stage 2 for TokenGazer, Stage
+        2 for dense; whiskers show the range over runs.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="band" id="method">
+  <div class="container wide">
+    <h2>Method</h2>
+    <figure class="framed">
+      <img src="assets/fig_task_row.png" alt="A representative held-out frame from each of the five benchmarks: PushT, PushT-Distract, Cube, Cube-Distract, and LIBERO-Goal.">
+      <figcaption>
+        A representative held-out frame from each benchmark, agentview camera only (LIBERO-Goal's
+        wrist camera, where the gaze spends most of its budget, is shown separately below in
+        Qualitative results). Both distractor variants show one live-composited severity-2
+        clutter frame from the same scene as their clean counterpart.
+      </figcaption>
+    </figure>
+  </div>
+  <div class="container">
+    <p>
+      A frozen DINOv2 vision transformer maps each observation to N patch embeddings (N = 256
+      per camera; LIBERO uses two cameras, N = 512). Since the value of a token subset can only be
+      judged by how well a policy trained on it performs, TokenGazer splits the problem into two
+      stages. Stage 1 trains a lightweight gaze policy with Group Relative Policy Optimization
+      (GRPO): for every frame, a group of candidate K-token subsets is scored by a frozen
+      action-prediction reward head that measures how accurately an expert action chunk can be
+      recovered from that subset alone, and the gaze policy is updated on the resulting
+      group-relative advantage. On LIBERO, where the same scene supports several
+      language-specified tasks, the gaze and the reward head also receive the task instruction.
+      Stage 2 freezes the gaze and trains a diffusion policy to act on its selections, drawing the
+      training subset per step as a 50/50 mix of the gaze's own greedy picks and a uniformly
+      random K-token subset, while always deploying with the gaze's greedy top-K. Because the
+      control policy attends only to the K tokens it is actually given, both its sequence length
+      and its computational cost scale directly with K.
+    </p>
+  </div>
+  <div class="container wide">
+    <figure class="framed">
+      <img src="assets/fig_pipeline.png" alt="Pipeline figure showing the observation, patch tokens, DINOv2 PCA feature space, sampled candidate subsets ranked by reward against the expert action, the winning subset, and the predicted action.">
+      <figcaption>
+        The TokenGazer pipeline on a real held-out frame: observation, patch tokens, DINOv2
+        feature space (top-3 PCA as RGB), the gaze policy ranking sampled candidate subsets by
+        reward against the real expert action for this frame, the winning subset, and the control
+        policy's predicted action.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="qualitative">
+  <div class="container wide">
+    <h2>Qualitative results</h2>
+    <figure class="framed narrow">
+      <img src="assets/fig_qualitative.png" alt="Patches selected by TokenGazer, unshaded, with unselected patches dimmed, on held-out frames from each benchmark.">
+      <figcaption>
+        Patches selected by TokenGazer (unshaded; unselected patches dimmed) on held-out frames
+        from one episode of each benchmark; the row label gives the benchmark and K. LIBERO's
+        gaze puts almost all of its budget on the wrist camera. Rollout videos are in the
+        Rollouts section below.
+      </figcaption>
+    </figure>
+    <figure class="framed">
+      <img src="assets/fig_clutter_strip.png" alt="Clean versus cluttered PushT frames with the K=16 selection outlined, for a distractor-trained selector and a clean-trained selector.">
+      <figcaption>
+        The same PushT frames, clean and with severity-2 clutter composited onto them, with the
+        K = 16 selection outlined. Rows 1&ndash;2: a selector trained with distractors, on the
+        clean and the cluttered version of each frame. Row 3: a selector trained only on clean
+        frames, evaluated on the same cluttered frames, showing what a clutter-naive gaze does
+        when clutter it never trained on is present.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="band" id="rollouts">
+  <div class="container">
+    <h2>Rollouts</h2>
+    <p>
+      Closed-loop rollouts from the final Stage-2 checkpoints, rendered from the trained policies
+      with the gaze's selected patches overlaid at every control step. Each caption reports the
+      metric the paper itself uses for that benchmark: PushT and PushT-Distract use the clipped
+      coverage score (not a binary success flag), Cube reports cubes placed of 2, and LIBERO-Goal
+      reports binary success together with the task instruction.
+    </p>
+  </div>
+  <div class="container wide">
+    <div class="video-grid">
+      <div class="video-cell">
+        <video src="assets/videos/pusht_K64_0.mp4" autoplay loop muted playsinline></video>
+        <p>PushT, K = 64, score 0.99</p>
+      </div>
+      <div class="video-cell">
+        <video src="assets/videos/pusht_K64_1.mp4" autoplay loop muted playsinline></video>
+        <p>PushT, K = 64, score 0.98</p>
+      </div>
+      <div class="video-cell">
+        <video src="assets/videos/pushtdistract_K16_clean_0.mp4" autoplay loop muted playsinline></video>
+        <p>PushT-Distract, K = 16, clean scene, score 0.43</p>
+      </div>
+      <div class="video-cell">
+        <video src="assets/videos/pushtdistract_K16_clean_1.mp4" autoplay loop muted playsinline></video>
+        <p>PushT-Distract, K = 16, clean scene, score 0.35</p>
+      </div>
+      <div class="video-cell">
+        <video src="assets/videos/pushtdistract_K16_clutter_0.mp4" autoplay loop muted playsinline></video>
+        <p>PushT-Distract, K = 16, severity-2 live clutter, score 0.39</p>
+      </div>
+      <div class="video-cell">
+        <video src="assets/videos/pushtdistract_K16_clutter_1.mp4" autoplay loop muted playsinline></video>
+        <p>PushT-Distract, K = 16, severity-2 live clutter, score 0.38</p>
+      </div>
+      <div class="video-cell">
+        <video src="assets/videos/cube_K64_0.mp4" autoplay loop muted playsinline></video>
+        <p>Cube, K = 64, 2 of 2 cubes placed</p>
+      </div>
+      <div class="video-cell">
+        <video src="assets/videos/cube_K64_1.mp4" autoplay loop muted playsinline></video>
+        <p>Cube, K = 64, 1 of 2 cubes placed</p>
+      </div>
+      <div class="video-cell">
+        <video src="assets/videos/libero_K8_task0_0.mp4" autoplay loop muted playsinline></video>
+        <p>LIBERO-Goal, K = 8, success &mdash; "Open the middle drawer of the cabinet"</p>
+      </div>
+      <div class="video-cell">
+        <video src="assets/videos/libero_K8_task1_0.mp4" autoplay loop muted playsinline></video>
+        <p>LIBERO-Goal, K = 8, success &mdash; "Put the bowl on the stove"</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="results">
+  <div class="container">
+    <h2>Results</h2>
+    <p>
+      Every benchmark is evaluated vision-only. Cells below are each method's best closed-loop
+      score over its own measured token budgets, with that best K as a subscript.
+    </p>
+    <div class="table-wrap">
+      <table>
+        <caption>Headline results (success rate, or cubes placed of 2 for Cube/Cube-Distract).</caption>
+        <thead>
+          <tr><th>Method</th><th>PushT</th><th>PushT-Distract</th><th>Cube</th><th>Cube-Distract</th><th>LIBERO</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Dense (256 tok.)<sup>&Dagger;</sup></td><td>0.75</td><td>0.19</td><td>0.89</td><td>0.51</td><td>0.72</td></tr>
+          <tr class="group"><td>Pooled</td><td>0.80<sub>4</sub></td><td>0.11<sub>64</sub></td><td>0.26<sub>8</sub></td><td>0.31<sub>64</sub></td><td>n/a</td></tr>
+          <tr><td>Random</td><td>0.78<sub>64</sub></td><td>0.25<sub>64</sub></td><td>0.71<sub>64</sub></td><td>0.21<sub>64</sub></td><td>0.71<sub>64</sub></td></tr>
+          <tr><td>Attention-norm</td><td>0.69<sub>16</sub></td><td>0.14<sub>64</sub></td><td>0.06<sub>8</sub></td><td>0.17<sub>64</sub></td><td>0.24<sub>64</sub></td></tr>
+          <tr><td>Center</td><td>0.65<sub>16</sub></td><td>0.13<sub>64</sub></td><td>0.11<sub>8</sub></td><td>0.15<sub>64</sub></td><td>0.21<sub>64</sub></td></tr>
+          <tr class="group ours"><td>TokenGazer</td><td class="best">0.85<sub>64</sub></td><td class="best">0.30<sub>64</sub></td><td class="best">0.88<sub>32</sub></td><td class="best">0.53<sub>64</sub></td><td class="best">0.82<sub>64</sub></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">
+      Each cell is a method's best closed-loop score over its own measured token budgets on
+      that benchmark, with that best K as a subscript (e.g. 0.85<sub>64</sub>). Bold marks the
+      best-performing selection method per column; dense is the reference being selected
+      against, not a competitor, so it is never bolded even where it is the numeric maximum
+      (e.g. Cube: TokenGazer's 0.88 at K = 32 is parity with dense's 0.89, not a loss).
+      <sup>&Dagger;</sup>Dense is 256 tokens except LIBERO, which is 512. TokenGazer's row is
+      GRPO at every entry except PushT, where a Gumbel-softmax variant is also measured but is
+      lower at every K.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <caption>K-ablation: PushT closed-loop success rate by method and token budget K.</caption>
+        <thead>
+          <tr><th>Method</th><th>K=1</th><th>K=4</th><th>K=8</th><th>K=16</th><th>K=32</th><th>K=64</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Dense (256 tok.)</td><td colspan="6">0.75</td></tr>
+          <tr class="group"><td>Pooled</td><td>0.59</td><td class="best">0.80</td><td>n/a</td><td>0.77</td><td>n/a</td><td>0.74</td></tr>
+          <tr><td>Random</td><td>0.39</td><td>0.50</td><td class="best">0.62</td><td>0.69</td><td class="best">0.71</td><td>0.78</td></tr>
+          <tr class="group ours"><td>TokenGazer (GRPO)</td><td>0.50</td><td>0.49</td><td>0.49</td><td class="best">0.80</td><td>0.58</td><td class="best">0.85</td></tr>
+          <tr class="ours"><td>TokenGazer (Gumbel)</td><td>0.59</td><td>0.52</td><td>0.52</td><td>0.57</td><td>0.63</td><td>0.58</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">
+      TokenGazer (GRPO) is non-monotonic in K: it dips below random at K = 32 before recovering
+      at K = 64. These are real per-K measurements, not a smoothed curve. Bold marks each
+      baseline's own best cell. Seeds: TokenGazer (GRPO) at K = 16, 64 and Random at K = 32, 64
+      are means of 3; every other cell is a single seed.
+    </p>
+  </div>
+</section>
+
+<section class="band" id="compute">
+  <div class="container">
+    <h2>Compute</h2>
+    <p>
+      Stage 2 alone is 2.3&times;, 2.3&times;, 1.46&times;, and 3.2&times; cheaper than dense on
+      PushT, PushT-Distract, Cube, and LIBERO respectively, and deployment conditions on K tokens
+      instead of 256 (512 for LIBERO). Counting Stage 1 (reward-head and selector training)
+      changes the picture: end-to-end TokenGazer training is cheaper than dense on LIBERO
+      (0.55&times;) and Cube (0.92&times;), but slightly more expensive on PushT (1.15&times;) and
+      PushT-Distract (1.12&times;). Stage 1 is a real cost that does not always pay for itself
+      within a single training run, but it is paid once per selector, amortised across every K
+      and every Stage-2 policy trained on it. Panel (c) of the teaser figure above plots this
+      Stage 1 + Stage 2 breakdown; the same numbers, per benchmark and stage, are below.
+    </p>
+    <div class="table-wrap">
+      <table>
+        <caption>End-to-end training wall-clock (minutes), GPU-matched (V100-SXM2) medians across available seeds.</caption>
+        <thead>
+          <tr><th>Benchmark</th><th>Method</th><th>Stage 1 (head + selector)</th><th>Stage 2</th><th>Total</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>PushT K=16</td><td>TokenGazer</td><td>63<sup>&dagger;</sup> + 42 = 105</td><td>62</td><td>167</td></tr>
+          <tr><td></td><td>Dense</td><td>&ndash;</td><td>145</td><td>145</td></tr>
+          <tr class="group"><td>PushT-Distract K=16</td><td>TokenGazer</td><td>63 + 37 = 100</td><td>64</td><td>164</td></tr>
+          <tr><td></td><td>Dense</td><td>&ndash;</td><td>147</td><td>147</td></tr>
+          <tr class="group"><td>Cube K=64</td><td>TokenGazer</td><td>17 + 18 = 35</td><td>99</td><td>134</td></tr>
+          <tr><td></td><td>Dense</td><td>&ndash;</td><td>145</td><td>145</td></tr>
+          <tr class="group"><td>LIBERO K=8</td><td>TokenGazer</td><td>26 + 66 = 92</td><td>117</td><td>209</td></tr>
+          <tr><td></td><td>Dense</td><td>&ndash;</td><td>377</td><td>377</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">
+      Stage 1 is head-training plus selector-training (GRPO); dense has no Stage 1.
+      <sup>&dagger;</sup>Clean PushT's head-training run did not survive the V100-only filter
+      used here; its Stage 1 reuses the PushT-Distract head-training time (same reward-head
+      configuration) as the best available estimate, so its Total is an estimate, not a direct
+      measurement, unlike every other cell.
+    </p>
+  </div>
+</section>
+
+<section id="code">
+  <div class="container">
+    <h2>Code and models</h2>
+    <div class="code-links">
+      <a class="code-card" href="https://github.com/ostadabbas/TokenGazer">
+        <i class="icon fa-brands fa-github"></i>
+        <div><strong>ostadabbas/TokenGazer</strong><span>Training and evaluation code for all benchmarks</span></div>
+      </a>
+      <a class="code-card" href="https://huggingface.co/bishoygaloaa/tokengazer">
+        <span class="icon">🤗</span>
+        <div><strong>bishoygaloaa/tokengazer</strong><span>Pretrained selectors and policies</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    Augmented Cognition Lab, Northeastern University
+  </div>
+</footer>
+
+</body>
+</html>
