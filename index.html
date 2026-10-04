@@ -437,7 +437,7 @@
       best-performing selection method per column; dense is the reference being selected
       against, not a competitor, so it is never bolded even where it is the numeric maximum
       (e.g. Cube: TokenGazer's 0.88 at K = 32 is parity with dense's 0.89, not a loss).
-      <sup>&Dagger;</sup>Dense is 256 tokens except LIBERO, which is 512. TokenGazer's row is
+      <sup>&Dagger;</sup>Dense conditions on every patch token, as Patch Policy does: 256, or 512 on LIBERO. TokenGazer's row is
       GRPO at every entry except PushT, where a Gumbel-softmax variant is also measured but is
       lower at every K.
     </p>
