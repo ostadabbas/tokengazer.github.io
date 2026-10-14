@@ -355,30 +355,47 @@
   <div class="container">
     <h2>Rollouts</h2>
     <p>
-      Closed-loop rollouts from the final Stage-2 checkpoints, rendered from the trained policies
-      with the gaze's selected patches overlaid at every control step. Each caption reports the
-      metric the paper itself uses for that benchmark: PushT and PushT-Distract use the clipped
-      coverage score (not a binary success flag), Cube reports cubes placed of 2, and LIBERO-Goal
-      reports binary success together with the task instruction.
+      Closed-loop rollouts with the gaze's selected patches at full brightness and the rest
+      dimmed, from the greedy selector alone. These are selected examples: among each benchmark's
+      successful episodes, we show those whose gaze lands most often on the task-relevant parts of
+      the scene (the T-block, the cubes, or the gripper and the instructed objects), so they show
+      the gaze at its clearest rather than its typical behavior. Cube and LIBERO frames are
+      brightened uniformly for viewing.
     </p>
   </div>
   <div class="container wide">
     <div class="video-grid">
       <div class="video-cell">
-        <video src="assets/videos/pusht_K64_0.mp4" autoplay loop muted playsinline></video>
-        <p>PushT, K = 64, score 0.99</p>
+        <video src="assets/videos/best/pusht_rank1_ep27.mp4" autoplay loop muted playsinline></video>
+        <p>PushT, K = 16: picks land on the T-block about five times as often as chance</p>
       </div>
       <div class="video-cell">
-        <video src="assets/videos/pusht_K64_1.mp4" autoplay loop muted playsinline></video>
-        <p>PushT, K = 64, score 0.98</p>
+        <video src="assets/videos/best/pusht_rank2_ep23.mp4" autoplay loop muted playsinline></video>
+        <p>PushT, K = 16, a second episode</p>
       </div>
       <div class="video-cell">
-        <video src="assets/videos/pushtdistract_K16_clean_0.mp4" autoplay loop muted playsinline></video>
-        <p>PushT-Distract, K = 16, clean scene, score 0.43</p>
+        <video src="assets/videos/best/cube_k8_rank3_ep42.mp4" autoplay loop muted playsinline></video>
+        <p>Cube, K = 8, 2 of 2 cubes placed: the gaze stays on the cubes</p>
       </div>
       <div class="video-cell">
-        <video src="assets/videos/pushtdistract_K16_clean_1.mp4" autoplay loop muted playsinline></video>
-        <p>PushT-Distract, K = 16, clean scene, score 0.35</p>
+        <video src="assets/videos/best/cube_k8_rank1_ep57.mp4" autoplay loop muted playsinline></video>
+        <p>Cube, K = 8, 1 of 2 cubes placed</p>
+      </div>
+      <div class="video-cell">
+        <video src="assets/videos/best/libero_goal_rank1_t07_e04_s0.mp4" autoplay loop muted playsinline></video>
+        <p>LIBERO-Goal, K = 8, success &mdash; "Turn on the stove"</p>
+      </div>
+      <div class="video-cell">
+        <video src="assets/videos/best/libero_10_rank1_t02_e04_s0.mp4" autoplay loop muted playsinline></video>
+        <p>LIBERO-10, K = 8, success &mdash; "Turn on the stove and put the moka pot on it"</p>
+      </div>
+      <div class="video-cell">
+        <video src="assets/videos/best/libero_object_rank1_t08_e00_s0.mp4" autoplay loop muted playsinline></video>
+        <p>LIBERO-Object, K = 8, success &mdash; "Pick up the chocolate pudding and place it in the basket"</p>
+      </div>
+      <div class="video-cell">
+        <video src="assets/videos/best/libero_spatial_rank1_t08_e01_s0.mp4" autoplay loop muted playsinline></video>
+        <p>LIBERO-Spatial, K = 8, success &mdash; "Pick up the black bowl next to the plate and place it on the plate"</p>
       </div>
       <div class="video-cell">
         <video src="assets/videos/pushtdistract_K16_clutter_0.mp4" autoplay loop muted playsinline></video>
@@ -388,23 +405,11 @@
         <video src="assets/videos/pushtdistract_K16_clutter_1.mp4" autoplay loop muted playsinline></video>
         <p>PushT-Distract, K = 16, severity-2 live clutter, score 0.38</p>
       </div>
-      <div class="video-cell">
-        <video src="assets/videos/cube_K64_0.mp4" autoplay loop muted playsinline></video>
-        <p>Cube, K = 64, 2 of 2 cubes placed</p>
-      </div>
-      <div class="video-cell">
-        <video src="assets/videos/cube_K64_1.mp4" autoplay loop muted playsinline></video>
-        <p>Cube, K = 64, 1 of 2 cubes placed</p>
-      </div>
-      <div class="video-cell">
-        <video src="assets/videos/libero_K8_task0_0.mp4" autoplay loop muted playsinline></video>
-        <p>LIBERO-Goal, K = 8, success &mdash; "Open the middle drawer of the cabinet"</p>
-      </div>
-      <div class="video-cell">
-        <video src="assets/videos/libero_K8_task1_0.mp4" autoplay loop muted playsinline></video>
-        <p>LIBERO-Goal, K = 8, success &mdash; "Put the bowl on the stove"</p>
-      </div>
     </div>
+    <p class="note">
+      The LIBERO clips come from one multi-task policy trained on all four LIBERO suites. Checkpoints
+      for every clip are on <a href="https://huggingface.co/bishoygaloaa/tokengazer">Hugging Face</a>.
+    </p>
   </div>
 </section>
 
